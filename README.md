@@ -138,15 +138,14 @@ or EFI binaries.
 ### Is upstream commit [eadb2f47a3ced5c64b23b90fd2a3463f63726066 "lockdown: also lock down previous kgdb use"](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=eadb2f47a3ced5c64b23b90fd2a3463f63726066) applied?
 
 -------------------------------------------------------------------------------
-[your text here]
-We use Linux kernel XXX and it contains the first two commits mentioned above.
+
+Yes, it contains the first two commits mentioned above.
 Our kernel does not include kgdb support, so the third commit is not applicable.
 
 -------------------------------------------------------------------------------
 ### If you use vendor_db functionality of providing multiple certificates and/or hashes please briefly describe your certificate setup.
 ### If there are allow-listed hashes please provide exact binaries for which hashes are created via file sharing service, available in public with anonymous access for verification.
 -------------------------------------------------------------------------------
-[your text here]
 
 Our shim consists of three vendor certificates:
 - a "production" certificate
@@ -155,6 +154,18 @@ Our shim consists of three vendor certificates:
 
 The PEM formatted certificates are available in the "config/certs" directory.
 No hashes are present in the shim's allow-list.
+
+The different vendor certificates, and the associated signed boot chain, are
+used in conjunction with the TPM's PCR7 and TPM Extended Authorization policies
+to control access to TPM based secrets such that only authorized OS kernels are
+allowed to access secrets stored in the TPM's NVRAM. Each certificate represents
+an authorized access to specific secrets.
+
+Thus, we must be able to distinguish kernels signed with each of the keys by their pcr7 value.
+The pcr7 value is used to build the TPM EA Policy for our efi binaries (kernel+initrd+cmdline)
+that are signed with these 3 keys. We tested with a parentCA only in either the VENDOR_CERT_FILE or
+VENDOR_DB_FILE, and shim uses that to extend pcr7. We are then unable to use the pcr7 value
+to distinguish our kernels nor apply our TPM EA Policies appropriately.
 
 -------------------------------------------------------------------------------
 ### If you are re-using a previously used (CA) certificate, you will need to add the hashes of the previous GRUB2 binaries exposed to the CVEs to vendor_dbx in shim in order to prevent GRUB2 from being able to chainload those older GRUB2 binaries. If you are changing to a new (CA) certificate, this does not apply.
@@ -181,7 +192,7 @@ This should include logs for creating the buildroots, applying patches, doing th
 -------------------------------------------------------------------------------
 
 The build log and relevant shim build artifacts can be found in
-the "artifacts-YYYYMMDDHHMMSS" directory.
+the "artifacts.20220705143958" directory.
 
 -------------------------------------------------------------------------------
 ### What changes were made since your SHIM was last signed?
@@ -214,7 +225,6 @@ No.
 ### Please provide exact SBAT entries for all SBAT binaries you are booting or planning to boot directly through shim.
 ### Where your code is only slightly modified from an upstream vendor's, please also preserve their SBAT entries to simplify revocation.
 -------------------------------------------------------------------------------
-[your text here]
 
 Our shim build uses the SBAT information below:
 
@@ -222,12 +232,12 @@ sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
 shim,1,UEFI shim,shim,1,https://github.com/rhboot/shim
 shim.puzzleos,1,PuzzleOS,shim,15.6-202207-1,https://github.com/puzzleos
 
-We boot Linux Kernels directly from shim using stubby,
-Our "bundled" initramfs + linux kernel + kernel commandline + stubby EFI binaries have:
+We boot Linux Kernels directly from shim using stubby.
+Our kernel EFI binaries contain:
 
 sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-stubby.puzzleos,1,PuzzleOS,stubby,%{stubby_version},https://github.com/puzzleos/stubby
-linux.puzzleos,1,PuzzleOS,linux,%{kernel_version},https://github.com/puzzleos
+stubby.puzzleos,1,PuzzleOS,stubby,1,https://github.com/puzzleos/stubby
+linux.puzzleos,1,PuzzleOS,linux,1,NOURL
 
 -------------------------------------------------------------------------------
 ### Which modules are built into your signed grub image?
@@ -274,7 +284,8 @@ No, we do not use our shim to load any additional bootloaders.
 -------------------------------------------------------------------------------
 ### What kernel are you using? Which patches does it includes to enforce Secure Boot?
 -------------------------------------------------------------------------------
-[your text here]
+
+We plan to sign kernel 5.10.124 and later..
 
 -------------------------------------------------------------------------------
 ### Add any additional information you think we may need to validate this shim.
